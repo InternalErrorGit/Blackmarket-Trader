@@ -1,0 +1,7 @@
+{
+  "disableFleaBlacklist": false,
+  "forcePriceUpdate": false,
+  "createCSVPriceFile": false,
+  "showDebugLog": false,
+  "disableFIRCondition": false
+}
