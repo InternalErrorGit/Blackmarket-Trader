@@ -27,12 +27,13 @@ import {createCSVPriceFile, disableFIRCondition, disableFleaBlacklist, showDebug
 import {PaymentService} from "@spt-aki/services/PaymentService";
 import {InventoryController} from "@spt-aki/controllers/InventoryController";
 import {EventOutputHolder} from "@spt-aki/routers/EventOutputHolder";
+import {author, name, version} from "../package.json";
 
 class BlackmarketTrader implements IPreAkiLoadMod, IPostDBLoadMod {
   private container: DependencyContainer;
   private prices: Record<string, number> = {};
 
-  preAkiLoad(container: DependencyContainer): void {
+  public preAkiLoad(container: DependencyContainer): void {
     this.container = container;
 
     container.afterResolution<TradeController>("TradeController", (token: InjectionToken<TradeController>, controller: TradeController) => {
@@ -55,8 +56,9 @@ class BlackmarketTrader implements IPreAkiLoadMod, IPostDBLoadMod {
   }
 
   private registerProfileImage(): void {
+    const modName = `${author.replace(/[^a-z0-9]/gi, "")}-${name.replace(/[^a-z0-9]/gi, "")}-${version}`;
     const preAkiModLoader = this.container.resolve<PreAkiModLoader>("PreAkiModLoader");
-    const imageFilepath = `./${preAkiModLoader.getModPath("InternalError-blackmarket-1.1.0")}res`;
+    const imageFilepath = `./${preAkiModLoader.getModPath(modName)}res`;
     const imageRouter = this.container.resolve<ImageRouter>("ImageRouter");
     imageRouter.addRoute(base.avatar.replace(".jpg", ""), `${imageFilepath}/blackmarket.jpg`);
   }
@@ -88,7 +90,6 @@ class BlackmarketTrader implements IPreAkiLoadMod, IPostDBLoadMod {
     }
 
   }
-
 
   private confirmTrading(pmcData: IPmcData, body: IProcessBaseTradeRequestData, sessionID: string, foundInRaid: boolean, upd: Upd): IItemEventRouterResponse {
     const tradeHelper = this.container.resolve<TradeHelper>("TradeHelper");
