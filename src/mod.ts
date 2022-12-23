@@ -1,35 +1,35 @@
-import {IPreAkiLoadMod} from "@spt-aki/models/external/IPreAkiLoadMod";
-import {IPostDBLoadMod} from "@spt-aki/models/external/IPostDBLoadMod";
-import {DependencyContainer, InjectionToken} from "tsyringe";
-import {TradeController} from "@spt-aki/controllers/TradeController";
-import {IPmcData} from "@spt-aki/models/eft/common/IPmcData";
-import {IProcessBaseTradeRequestData} from "@spt-aki/models/eft/trade/IProcessBaseTradeRequestData";
-import {Upd} from "@spt-aki/models/eft/common/tables/IItem";
-import {ConfigServer} from "@spt-aki/servers/ConfigServer";
-import {ITraderConfig, UpdateTime} from "@spt-aki/models/spt/config/ITraderConfig";
-import {ConfigTypes} from "@spt-aki/models/enums/ConfigTypes";
-import {PreAkiModLoader} from "@spt-aki/loaders/PreAkiModLoader";
-import {ImageRouter} from "@spt-aki/routers/ImageRouter";
-import * as base from "../database/base.json";
-import {TradeHelper} from "@spt-aki/helpers/TradeHelper";
-import {IItemEventRouterResponse} from "@spt-aki/models/eft/itemEvent/IItemEventRouterResponse";
-import {IProcessBuyTradeRequestData} from "@spt-aki/models/eft/trade/IProcessBuyTradeRequestData";
-import {IProcessSellTradeRequestData} from "@spt-aki/models/eft/trade/IProcessSellTradeRequestData";
-import {ILogger} from "@spt-aki/models/spt/utils/ILogger";
-import {DatabaseServer} from "@spt-aki/servers/DatabaseServer";
-import {RagfairPriceService} from "@spt-aki/services/RagfairPriceService";
-import {LogTextColor} from "@spt-aki/models/spt/logging/LogTextColor";
+import { InventoryController } from "@spt-aki/controllers/InventoryController";
+import { TradeController } from "@spt-aki/controllers/TradeController";
+import { TradeHelper } from "@spt-aki/helpers/TradeHelper";
+import { PreAkiModLoader } from "@spt-aki/loaders/PreAkiModLoader";
+import { IPmcData } from "@spt-aki/models/eft/common/IPmcData";
+import { Upd } from "@spt-aki/models/eft/common/tables/IItem";
+import { ITraderBase } from "@spt-aki/models/eft/common/tables/ITrader";
+import { IItemEventRouterResponse } from "@spt-aki/models/eft/itemEvent/IItemEventRouterResponse";
+import { IProcessBaseTradeRequestData } from "@spt-aki/models/eft/trade/IProcessBaseTradeRequestData";
+import { IProcessBuyTradeRequestData } from "@spt-aki/models/eft/trade/IProcessBuyTradeRequestData";
+import { IProcessSellTradeRequestData } from "@spt-aki/models/eft/trade/IProcessSellTradeRequestData";
+import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
+import { IPostDBLoadMod } from "@spt-aki/models/external/IPostDBLoadMod";
+import { IPreAkiLoadMod } from "@spt-aki/models/external/IPreAkiLoadMod";
+import { ITraderConfig, UpdateTime } from "@spt-aki/models/spt/config/ITraderConfig";
+import { LogTextColor } from "@spt-aki/models/spt/logging/LogTextColor";
+import { ILocaleGlobalBase } from "@spt-aki/models/spt/server/ILocaleBase";
+import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
+import { EventOutputHolder } from "@spt-aki/routers/EventOutputHolder";
+import { ImageRouter } from "@spt-aki/routers/ImageRouter";
+import { ConfigServer } from "@spt-aki/servers/ConfigServer";
+import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
+import { PaymentService } from "@spt-aki/services/PaymentService";
+import { RagfairPriceService } from "@spt-aki/services/RagfairPriceService";
+import { JsonUtil } from "@spt-aki/utils/JsonUtil";
 import fs from "fs";
-import {JsonUtil} from "@spt-aki/utils/JsonUtil";
-import {ITraderBase} from "@spt-aki/models/eft/common/tables/ITrader";
-import {ILocaleGlobalBase} from "@spt-aki/models/spt/server/ILocaleBase";
-import {createCSVPriceFile, disableFIRCondition, disableFleaBlacklist, showDebugLog} from "../config/config.json";
-import {PaymentService} from "@spt-aki/services/PaymentService";
-import {InventoryController} from "@spt-aki/controllers/InventoryController";
-import {EventOutputHolder} from "@spt-aki/routers/EventOutputHolder";
-import {author, name, version} from "../package.json";
+import { DependencyContainer, InjectionToken } from "tsyringe";
+import { createCSVPriceFile, disableFIRCondition, disableFleaBlacklist, showDebugLog } from "../config/config.json";
+import * as base from "../database/base.json";
+import { author, name, version } from "../package.json";
 
-class BlackmarketTrader implements IPreAkiLoadMod, IPostDBLoadMod {
+class Mod implements IPreAkiLoadMod, IPostDBLoadMod {
   private container: DependencyContainer;
   private prices: Record<string, number> = {};
 
@@ -40,7 +40,7 @@ class BlackmarketTrader implements IPreAkiLoadMod, IPostDBLoadMod {
       controller.confirmTrading = (pmcData: IPmcData, body: IProcessBaseTradeRequestData, sessionID: string, foundInRaid?: boolean, upd?: Upd) => {
         return this.confirmTrading(pmcData, body, sessionID, foundInRaid, upd);
       }
-    }, {frequency: "Always"})
+    }, { frequency: "Always" })
 
     this.registerProfileImage();
     this.setupTraderUpdateTime();
@@ -50,7 +50,7 @@ class BlackmarketTrader implements IPreAkiLoadMod, IPostDBLoadMod {
 
     const configServer = this.container.resolve<ConfigServer>("ConfigServer");
     const traderConfig = configServer.getConfig<ITraderConfig>(ConfigTypes.TRADER);
-    const traderRefreshConfig: UpdateTime = {traderId: base._id, seconds: 3600}
+    const traderRefreshConfig: UpdateTime = { traderId: base._id, seconds: 3600 }
     traderConfig.updateTime.push(traderRefreshConfig);
 
   }
@@ -78,16 +78,25 @@ class BlackmarketTrader implements IPreAkiLoadMod, IPostDBLoadMod {
       questassort: {}
     };
 
-    const locales = Object.values(tables.locales.global) as ILocaleGlobalBase[];
+    const locales = Object.values(tables.locales.global) as Record<string, string>[];
     for (const locale of locales) {
-      locale.trading[base._id] = {
-        FullName: base.name,
-        FirstName: "Unknown",
-        Nickname: base.nickname,
-        Location: base.location,
-        Description: "Error 401: Not authorized"
-      };
+      locale[`${base._id} FullName`] = base.name;
+      locale[`${base._id} FirstName`] = "Unknown";
+      locale[`${base._id} Nickname`] = base.nickname;
+      locale[`${base._id} Location`] = base.location;
+      locale[`${base._id} Description`] = "Error 401: Not authorized";
     }
+
+    // const locales = Object.values(tables.locales.global) as ILocaleGlobalBase[];
+    // for (const locale of locales) {
+    //   locale.trading[base._id] = {
+    //     FullName: base.name,
+    //     FirstName: "Unknown",
+    //     Nickname: base.nickname,
+    //     Location: base.location,
+    //     Description: "Error 401: Not authorized"
+    //   };
+    // }
 
   }
 
@@ -103,7 +112,8 @@ class BlackmarketTrader implements IPreAkiLoadMod, IPostDBLoadMod {
       const sellData = <IProcessSellTradeRequestData>body;
       if (body.tid === "blackmarket") {
         return this.confirmBlackmarketTrading(pmcData, sellData, sessionID);
-      } else {
+      }
+      else {
         return tradeHelper.sellItem(pmcData, sellData, sessionID);
       }
     }
@@ -140,7 +150,8 @@ class BlackmarketTrader implements IPreAkiLoadMod, IPostDBLoadMod {
           const price = this.prices[item._tpl];
           if (price === undefined) {
             if (showDebugLog) logger.logWithColor("Blackmarket Trader: Cannot sell item: Price is not found", LogTextColor.RED);
-          } else {
+          }
+          else {
             logger.info("Blackmarket Trader: Sold item: " + item._tpl + " for " + price);
             output = inventoryController.removeItem(pmcData, checkId, sessionID, output);
             money += price;
@@ -198,4 +209,4 @@ class BlackmarketTrader implements IPreAkiLoadMod, IPostDBLoadMod {
   }
 }
 
-module.exports = {mod: new BlackmarketTrader()}
+module.exports = { mod: new Mod() }

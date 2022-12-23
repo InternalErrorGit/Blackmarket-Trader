@@ -1,10 +1,10 @@
 {
-  "name": "Blackmarket Trader",
-  "version": "1.0.0",
+  "name": "blackmarket-Trader",
+  "version": "1.1.0",
   "main": "src/mod.js",
   "license": "MIT",
   "author": "InternalError_",
-  "akiVersion": "3.3.0",
+  "akiVersion": "3.4.0",
   "scripts": {
     "setup": "npm i",
     "build": "node ./packageBuild.ts"

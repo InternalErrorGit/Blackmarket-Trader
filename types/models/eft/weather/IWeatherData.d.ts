@@ -1,4 +1,4 @@
-import { WindDirection } from "../../enums/WindDirection";
+import { WindDirection } from "../../../models/enums/WindDirection";
 export interface IWeatherData {
     acceleration: number;
     time: string;

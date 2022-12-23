@@ -1,4 +1,4 @@
-import { WindDirection } from "../../enums/WindDirection";
+import { WindDirection } from "../../../models/enums/WindDirection";
 import { MinMax } from "../../common/MinMax";
 import { IBaseConfig } from "./IBaseConfig";
 export interface IWeatherConfig extends IBaseConfig {

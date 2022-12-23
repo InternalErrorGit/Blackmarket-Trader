@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import http, { IncomingMessage, ServerResponse } from "types/servers/http";
+import http, { IncomingMessage, ServerResponse } from "http";
 import { ApplicationContext } from "../context/ApplicationContext";
 import { HttpServerHelper } from "../helpers/HttpServerHelper";
 import { IHttpConfig } from "../models/spt/config/IHttpConfig";

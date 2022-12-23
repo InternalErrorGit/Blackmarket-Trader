@@ -1,2 +1,2 @@
-import type { DependencyContainer } from "types/models/external/tsyringe";
+import type { DependencyContainer } from "tsyringe";
 export type { DependencyContainer };
